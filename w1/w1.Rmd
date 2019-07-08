@@ -1,11 +1,13 @@
 ---
-title: "w1"
+title: "class note - week 1"
 author: "Allen Ho"
 date: "7/8/2019"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+# Sample Code
+
+```{r setup, include=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -23,8 +25,21 @@ summary(cars)
 
 You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
+```{r pressure}
 plot(pressure)
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+# Test
+
+```{r data}
+setwd('~/Documents/DSP/Data_Science_Programming/w1')
+data <- read.table( './data.csv', header=TRUE, sep=',' )
+data[,'name']
+data[1,]
+data[,1:2]
+data[,'id']
+class(data[,'name'])
+```
+
