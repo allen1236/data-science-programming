@@ -62,3 +62,11 @@ switch( case, f1(5, 3), f2(5, 3) )
 ```{r plot}
 plot( data[,'age'], data[,'gpa'] )
 ```
+
+### Other
+
+```{r other}
+class( x <- cut( data[,'age'], c(20, 30), c(99) ) )
+data$age
+x
+```
