@@ -2,5 +2,6 @@
 ## Profile
 Name: 何國瑋<br>
 Student ID: B07901135<br> 
-Department: NTU EE2
-## Week1
+Department: NTU EE 2
+## Progress
+### Week 1 (07/08, 07/11)
