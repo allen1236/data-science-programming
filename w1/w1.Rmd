@@ -1,5 +1,5 @@
 ---
-title: "class note - week 1"
+title: "Class Note - Week 1"
 author: "Allen Ho"
 date: "7/8/2019"
 output: html_document
@@ -33,7 +33,7 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 
 # Test
 
-### dataframe
+### Dataframe
 ```{r data}
 setwd('~/Documents/DSP/Data_Science_Programming/w1')
 data <- read.table( './data.csv', header=TRUE, sep=',' )
@@ -61,6 +61,12 @@ switch( case, f1(5, 3), f2(5, 3) )
 
 ```{r plot}
 plot( data[,'age'], data[,'gpa'] )
+```
+
+### Include External File
+
+```{r code=readLines('ex1.R')}
+# with {r code=readLines('ex1.R')}
 ```
 
 ### Other
