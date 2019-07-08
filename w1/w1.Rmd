@@ -33,9 +33,11 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 
 # Test
 
+### dataframe
 ```{r data}
 setwd('~/Documents/DSP/Data_Science_Programming/w1')
 data <- read.table( './data.csv', header=TRUE, sep=',' )
+data
 data[,'name']
 data[1,]
 data[,1:2]
@@ -43,3 +45,20 @@ data[,'id']
 class(data[,'name'])
 ```
 
+### Switch
+
+```{r switch}
+
+f1 <- function( a, b ){ return(a+b) }
+f2 <- function( a, b ){ return(a-b) }
+case <- 2
+
+switch( case, f1(5, 3), f2(5, 3) )
+
+```
+
+### Plot
+
+```{r plot}
+plot( data[,'age'], data[,'gpa'] )
+```

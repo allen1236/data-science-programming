@@ -1,5 +1,5 @@
-id,name,major,age,gender
-b1,allen,EE,19,M
-b2,frank,Phys,25,M
-b3,monica,AC,19,F
-b4,kevin,CS,19,M
+id,name,major,age,gpa,gender
+b1,allen,EE,18,3.8,M
+b2,frank,Phys,25,4.3,M
+b3,monica,AC,19,4.0,F
+b4,kevin,CS,19,4.1,M
