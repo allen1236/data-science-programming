@@ -36,7 +36,7 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 ### Dataframe
 ```{r data}
 setwd('~/Documents/DSP/Data_Science_Programming/w1')
-data <- read.table( './data.csv', header=TRUE, sep=',' )
+data <- read.table( 'data/data.csv', header=TRUE, sep=',' )
 data
 data[,'name']
 data[1,]
@@ -65,7 +65,7 @@ plot( data[,'age'], data[,'gpa'] )
 
 ### Include External File
 
-```{r code=readLines('ex1.R')}
+```{r code=readLines('src/ex1.R')}
 # with {r code=readLines('ex1.R')}
 ```
 
@@ -76,3 +76,8 @@ class( x <- cut( data[,'age'], c(20, 30), c(99) ) )
 data$age
 x
 ```
+
+This is a test.
+Goodbye World.
+
+
