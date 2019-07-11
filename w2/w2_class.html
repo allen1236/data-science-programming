@@ -381,18 +381,40 @@ $(document).ready(function () {
 </div>
 
 
-<div id="data-combination---unemployment-rate-suicide-rate-and-gdp" class="section level1">
-<h1>Data Combination - unemployment rate, suicide rate and GDP</h1>
+<div id="data-combination" class="section level1">
+<h1>Data Combination</h1>
+<div id="data-source" class="section level3">
+<h3>Data Source</h3>
+<ul>
+<li><a href="https://www.kaggle.com/uddipta/world-bank-unemployment-data-19912017/version/1">World Bank Unemployment Data (1991-2017)</a></li>
+<li><a href="https://www.kaggle.com/russellyates88/suicide-rates-overview-1985-to-2016">Suicide Rates Overview 1985 to 2016</a></li>
+</ul>
+</div>
+<div id="new-data" class="section level3">
+<h3>New Data</h3>
+<ul>
+<li>country: country name</li>
+<li>year: year</li>
+<li>region: the region of the country</li>
+<li>unemploy: the unemployment rate of the country in that year</li>
+<li>gdp_year: the gdp of the country in that year</li>
+<li>sr_15_24: the suicide number in 15~24 years old population (among 100k people)</li>
+<li>sr_25_34: the suicide number in 25~34 years old population (among 100k people)</li>
+<li>sr_35_54: the suicide number in 35~54 years old population (among 100k people)</li>
+</ul>
+</div>
+<div id="code" class="section level3">
+<h3>Code</h3>
+<p>load the csv files</p>
 <pre class="r"><code>r_suicide = read.csv('./data/suicide.csv')
-r_unemploy = read.csv('./data/unemployment.csv')
-# country, region, year, sr_15_24, sr_25_34, sr_35_54, gdp, ue_rate, incomegroup
-process_suicide_data = function( year_ ) {
+r_unemploy = read.csv('./data/unemployment.csv')</code></pre>
+<p>define the function <code>process_suicide_data</code> to calculate the suicide rate of each year</p>
+<pre class="r"><code>process_suicide_data = function( year_ ) {
     country_data = filter( r_suicide,
         year == year_, sex == 'male', age == '15-24 years' ) %&gt;%
         select( country, year, 'gdp_for_year....' )
     smaller = select( r_suicide, year, sex, age, suicides_no, population ) %&gt;%
         filter( year == year_ )
-
     get_sr = function( age_ ) {
         m = filter( smaller, sex == 'male', age == age_ )
         f = filter( smaller, sex == 'female', age == age_ )
@@ -403,52 +425,47 @@ process_suicide_data = function( year_ ) {
     sr35 = get_sr( '35-54 years' )
 
     return( cbind( country_data, 
-        suicide_rate_15_24 = sr15, 
-        suicide_rate_25_34 = sr25,
-        suicide_rate_35_54 = sr35 ) )
-}
-data = data.frame( 
+        sr_15_24 = sr15, 
+        sr_25_34 = sr25,
+        sr_35_54 = sr35 ) )
+}</code></pre>
+<p>create new data frame</p>
+<pre class="r"><code>data = data.frame( 
     country = c(),
     year = c(),
     region = c(),
-    income_group = c(),
-    uemployment_rate = c(),
+    unemploy = c(),
     gdp_year = c(),
-    suicide_rate_15_24 = c(),
-    suicide_rate_25_34 = c(),
-    suicide_rate_35_54 = c()
-)
-for ( i in 1991:2017 ) {
-    ue_data = select( r_unemploy, Country.Name, Region, IncomeGroup, paste('X', format(i), sep='') )
+    sr_15_24 = c(),
+    sr_25_34 = c(),
+    sr_35_54 = c()
+)</code></pre>
+<p>compute the suicide rate of each year and add those data to the new data frame</p>
+<pre class="r"><code>for ( i in 1991:2017 ) {
+    ue_data = select( r_unemploy, Country.Name, Region, paste('X', format(i), sep='') )
     sc_data = process_suicide_data( i )
     ue_data = cbind( ue_data, year=i )
     names( ue_data )[1] = 'country'
     result = merge( ue_data, sc_data, by = c('country', 'year') )
-    names( result )[3:6] = c('region', 'income_group', 'unemployment_rate', 'gdp_year')
+    names( result )[3:5] = c('region', 'unemploy', 'gdp_year')
     data = rbind( data, result )
-}
-head(data)</code></pre>
-<pre><code>##      country year                    region        income_group
-## 1  Argentina 1991 Latin America &amp; Caribbean Upper middle income
-## 2    Armenia 1991     Europe &amp; Central Asia Lower middle income
-## 3  Australia 1991       East Asia &amp; Pacific         High income
-## 4    Austria 1991     Europe &amp; Central Asia         High income
-## 5 Azerbaijan 1991     Europe &amp; Central Asia Upper middle income
-## 6   Barbados 1991 Latin America &amp; Caribbean         High income
-##   unemployment_rate        gdp_year suicide_rate_15_24 suicide_rate_25_34
-## 1               5.8 189,719,984,268           4.422333           6.344016
-## 2              18.9   2,068,526,522           1.031460           3.659094
-## 3               9.6 325,358,292,128          15.864967          18.333687
-## 4               3.4 173,794,177,725          16.501810          18.700697
-## 5               4.6   8,792,365,811           2.238472           2.640911
-## 6              17.1   2,007,109,829           6.250000          10.869565
-##   suicide_rate_35_54
-## 1           7.302984
-## 2           3.088077
-## 3          17.782915
-## 4          27.149717
-## 5           2.965219
-## 6           9.433962</code></pre>
+}</code></pre>
+<p>print the new data frame</p>
+<pre><code>##      country year                    region unemploy        gdp_year
+## 1  Argentina 1991 Latin America &amp; Caribbean      5.8 189,719,984,268
+## 2    Armenia 1991     Europe &amp; Central Asia     18.9   2,068,526,522
+## 3  Australia 1991       East Asia &amp; Pacific      9.6 325,358,292,128
+## 4    Austria 1991     Europe &amp; Central Asia      3.4 173,794,177,725
+## 5 Azerbaijan 1991     Europe &amp; Central Asia      4.6   8,792,365,811
+## 6   Barbados 1991 Latin America &amp; Caribbean     17.1   2,007,109,829
+##    sr_15_24  sr_25_34  sr_35_54
+## 1  4.422333  6.344016  7.302984
+## 2  1.031460  3.659094  3.088077
+## 3 15.864967 18.333687 17.782915
+## 4 16.501810 18.700697 27.149717
+## 5  2.238472  2.640911  2.965219
+## 6  6.250000 10.869565  9.433962</code></pre>
+</div>
 </div>
 <div id="data-collecting" class="section level1">
 <h1>Data Collecting</h1>
