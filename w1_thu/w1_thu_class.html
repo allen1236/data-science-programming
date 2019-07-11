@@ -393,14 +393,14 @@ $(document).ready(function () {
 <div id="new-data" class="section level3">
 <h3>New Data</h3>
 <ul>
-<li>country: country name</li>
-<li>year: year</li>
-<li>region: the region of the country</li>
-<li>unemploy: the unemployment rate of the country in that year</li>
-<li>gdp_year: the gdp of the country in that year</li>
-<li>sr_15_24: the suicide number in 15~24 years old population (among 100k people)</li>
-<li>sr_25_34: the suicide number in 25~34 years old population (among 100k people)</li>
-<li>sr_35_54: the suicide number in 35~54 years old population (among 100k people)</li>
+<li><strong>country</strong>: country name</li>
+<li><strong>year</strong>: year</li>
+<li><strong>region</strong>: the region of the country</li>
+<li><strong>unemploy</strong>: the unemployment rate of the country in that year</li>
+<li><strong>gdp_year</strong>: the gdp of the country in that year</li>
+<li><strong>sr_15_24</strong>: the suicide number in 15~24 years old population (among 100k people)</li>
+<li><strong>sr_25_34</strong>: the suicide number in 25~34 years old population (among 100k people)</li>
+<li><strong>sr_35_54</strong>: the suicide number in 35~54 years old population (among 100k people)</li>
 </ul>
 </div>
 <div id="code" class="section level3">
@@ -408,7 +408,7 @@ $(document).ready(function () {
 <p>load the csv files</p>
 <pre class="r"><code>r_suicide = read.csv('./data/suicide.csv')
 r_unemploy = read.csv('./data/unemployment.csv')</code></pre>
-<p>define the function <code>process_suicide_data</code> to calculate the suicide rate of each year</p>
+<p>define the function <code>process_suicide_data()</code> to calculate the suicide rate of each year</p>
 <pre class="r"><code>process_suicide_data = function( year_ ) {
     country_data = filter( r_suicide,
         year == year_, sex == 'male', age == '15-24 years' ) %&gt;%

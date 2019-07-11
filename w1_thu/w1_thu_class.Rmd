@@ -20,14 +20,14 @@ setwd('~/Documents/DSP/Data_Science_Programming/w1_thu/')
 
 ### New Data
 
-- country: country name
-- year: year
-- region: the region of the country
-- unemploy: the unemployment rate of the country in that year
-- gdp_year: the gdp of the country in that year
-- sr_15_24: the suicide number in 15~24 years old population (among 100k people)
-- sr_25_34: the suicide number in 25~34 years old population (among 100k people)
-- sr_35_54: the suicide number in 35~54 years old population (among 100k people)
+- __country__: country name
+- __year__: year
+- __region__: the region of the country
+- __unemploy__: the unemployment rate of the country in that year
+- __gdp_year__: the gdp of the country in that year
+- __sr_15_24__: the suicide number in 15~24 years old population (among 100k people)
+- __sr_25_34__: the suicide number in 25~34 years old population (among 100k people)
+- __sr_35_54__: the suicide number in 35~54 years old population (among 100k people)
 
 ### Code
 
@@ -38,7 +38,7 @@ r_suicide = read.csv('./data/suicide.csv')
 r_unemploy = read.csv('./data/unemployment.csv')
 ```
 
-define the function `process_suicide_data` to calculate the suicide rate of each year
+define the function `process_suicide_data()` to calculate the suicide rate of each year
 
 ```{r}
 process_suicide_data = function( year_ ) {
