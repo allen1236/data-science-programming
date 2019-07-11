@@ -1,0 +1,12 @@
+---
+title: "Class Note - Week 2"
+author: "Allen Ho"
+date: "7/11/2019"
+output: html_document
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo=TRUE)
+```
+
+
