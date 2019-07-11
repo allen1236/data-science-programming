@@ -5,8 +5,63 @@ date: "7/11/2019"
 output: html_document
 ---
 
-```{r setup, include=TRUE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=TRUE)
+library(dplyr)
+setwd('~/Documents/DSP/Data_Science_Programming/w2/')
 ```
 
+# Data Combination 
 
+```{r data combine}
+r_suicide = read.csv('./data/suicide.csv')
+r_unemploy = read.csv('./data/unemployment.csv')
+# country, region, year, sr_15_24, sr_25_34, sr_35_54, gdp, ue_rate, incomegroup
+process_suicide_data = function( year_ ) {
+    country_data = filter( r_suicide,
+        year == year_, sex == 'male', age == '15-24 years' ) %>%
+        select( country, year, 'gdp_for_year....' )
+    smaller = select( r_suicide, year, sex, age, suicides_no, population ) %>%
+        filter( year == year_ )
+    get_sr = function( age_ ) {
+        m = filter( smaller, sex == 'male', age == age_ )
+        f = filter( smaller, sex == 'female', age == age_ )
+        sr = 100000 * ( m$suicides_no + f$suicides_no ) / (m$population + f$population) %>% return
+    }
+    sr15 = get_sr( '15-24 years' )
+    sr25 = get_sr( '25-34 years' )
+    sr35 = get_sr( '35-54 years' )
+
+    return( cbind( country_data, 
+        suicide_rate_15_24 = sr15, 
+        suicide_rate_25_34 = sr25,
+        suicide_rate_35_54 = sr35 ) )
+}
+data = data.frame( 
+    country = c(),
+    year = c(),
+    region = c(),
+    income_group = c(),
+    uemployment_rate = c(),
+    gdp_year = c(),
+    suicide_rate_15_24 = c(),
+    suicide_rate_25_34 = c(),
+    suicide_rate_35_54 = c()
+)
+for ( i in 1991:2017 ) {
+    ue_data = select( r_unemploy, Country.Name, Region, IncomeGroup, paste('X', format(i), sep='') )
+    sc_data = process_suicide_data( i )
+    ue_data = cbind( ue_data, year=i )
+    names( ue_data )[1] = 'country'
+    result = merge( ue_data, sc_data, by = c('country', 'year') )
+    names( result )[3:6] = c('region', 'income_group', 'unemployment_rate', 'gdp_year')
+    data = rbind( data, result )
+}
+head(data)
+```
+
+# Data Collecting
+
+```{r data collecting}
+
+```
