@@ -1,0 +1,103 @@
+---
+title: "Class Note - Week 1 Thu"
+author: "Allen Ho"
+date: "7/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+library(dplyr)
+setwd('~/Documents/DSP/Data_Science_Programming/w1_thu/')
+```
+
+# Data Combination 
+
+### Data Source
+
+- [World Bank Unemployment Data (1991-2017)](https://www.kaggle.com/uddipta/world-bank-unemployment-data-19912017/version/1 )
+- [Suicide Rates Overview 1985 to 2016](https://www.kaggle.com/russellyates88/suicide-rates-overview-1985-to-2016) 
+
+### New Data
+
+- country: country name
+- year: year
+- region: the region of the country
+- unemploy: the unemployment rate of the country in that year
+- gdp_year: the gdp of the country in that year
+- sr_15_24: the suicide number in 15~24 years old population (among 100k people)
+- sr_25_34: the suicide number in 25~34 years old population (among 100k people)
+- sr_35_54: the suicide number in 35~54 years old population (among 100k people)
+
+### Code
+
+load the csv files
+
+```{r load data}
+r_suicide = read.csv('./data/suicide.csv')
+r_unemploy = read.csv('./data/unemployment.csv')
+```
+
+define the function `process_suicide_data` to calculate the suicide rate of each year
+
+```{r}
+process_suicide_data = function( year_ ) {
+    country_data = filter( r_suicide,
+        year == year_, sex == 'male', age == '15-24 years' ) %>%
+        select( country, year, 'gdp_for_year....' )
+    smaller = select( r_suicide, year, sex, age, suicides_no, population ) %>%
+        filter( year == year_ )
+    get_sr = function( age_ ) {
+        m = filter( smaller, sex == 'male', age == age_ )
+        f = filter( smaller, sex == 'female', age == age_ )
+        sr = 100000 * ( m$suicides_no + f$suicides_no ) / (m$population + f$population) %>% return
+    }
+    sr15 = get_sr( '15-24 years' )
+    sr25 = get_sr( '25-34 years' )
+    sr35 = get_sr( '35-54 years' )
+
+    return( cbind( country_data, 
+        sr_15_24 = sr15, 
+        sr_25_34 = sr25,
+        sr_35_54 = sr35 ) )
+}
+```
+
+create new data frame
+
+```{r}
+data = data.frame( 
+    country = c(),
+    year = c(),
+    region = c(),
+    unemploy = c(),
+    gdp_year = c(),
+    sr_15_24 = c(),
+    sr_25_34 = c(),
+    sr_35_54 = c()
+)
+```
+compute the suicide rate of each year and add those data to the new data frame
+```{r}
+for ( i in 1991:2017 ) {
+    ue_data = select( r_unemploy, Country.Name, Region, paste('X', format(i), sep='') )
+    sc_data = process_suicide_data( i )
+    ue_data = cbind( ue_data, year=i )
+    names( ue_data )[1] = 'country'
+    result = merge( ue_data, sc_data, by = c('country', 'year') )
+    names( result )[3:5] = c('region', 'unemploy', 'gdp_year')
+    data = rbind( data, result )
+}
+```
+
+print the new data frame
+
+```{r, echo=FALSE}
+head(data)
+```
+
+# Data Collecting
+
+```{r data collecting}
+
+```
