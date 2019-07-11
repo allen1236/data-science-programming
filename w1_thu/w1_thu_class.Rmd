@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=TRUE)
 library(dplyr)
-setwd('~/Documents/DSP/Data_Science_Programming/w2/')
+setwd('~/Documents/DSP/Data_Science_Programming/w1_thu/')
 ```
 
 # Data Combination 
