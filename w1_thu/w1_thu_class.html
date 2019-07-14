@@ -469,6 +469,122 @@ r_unemploy = read.csv('./data/unemployment.csv')</code></pre>
 </div>
 <div id="data-collecting" class="section level1">
 <h1>Data Collecting</h1>
+<div id="description" class="section level3">
+<h3>Description</h3>
+</div>
+<div id="code-1" class="section level3">
+<h3>Code</h3>
+<p>Here is the setup of some parameters.</p>
+<pre class="r"><code>output_dir = './data/output.csv'
+page_total = 1      # 50 posts in a page
+index_url = 'https://english.stackexchange.com/questions?tab=newest&amp;pagesize=50&amp;page='
+base_url = 'https://english.stackexchange.com'</code></pre>
+<p>The function <code>get_urls</code> is to get the urls of 50 posts from a page. And the function <code>get_text</code> is to get all the content and comments from a post.</p>
+<pre class="r"><code>get_urls &lt;- function( page_num ) {
+
+    # if an http error occur and the status code is 429 (too many requests),
+    # retry after 1 minute
+    repeat {
+        r &lt;- paste( index_url, page_num, sep='' ) %&gt;% GET()
+        if( http_error( r ) ) {
+            if ( http_status( r ) == 429 ) wait() 
+            else stop( http_status( r ) )
+        }
+        else break 
+    }
+
+    # read html from the response and get all the urls of posts
+    read_html( r ) %&gt;% 
+        html_nodes( '#questions a.question-hyperlink' ) %&gt;% 
+        html_attr( 'href' ) %&gt;% 
+        return
+}
+get_text = function( url ) {
+
+    # if an http error occur and the status code is 429 (too many requests),
+    # retry after 1 minute
+    repeat{ 
+        r &lt;- GET(paste( base_url, url, sep='' ))
+        if( http_error( r ) ) {
+            if ( http_status( r ) == 429 ) wait() 
+            else stop( http_status( r ) )
+        }
+        else break 
+    }
+
+    # read html from the response 
+    html &lt;- read_html( r )
+
+    # get the content of the post and all the comments
+    post_text = html_nodes( html, &quot;.post-text&quot; ) %&gt;% html_text()
+    comment_text = html_nodes( html, &quot;.comment-copy&quot; ) %&gt;% html_text()
+
+    # combine all the text and replace the symbols and numbers with space
+    c( post_text, comment_text ) %&gt;% 
+        str_replace_all( &quot;[^a-zA-Z]&quot;, &quot; &quot;)  %&gt;% 
+        return
+}</code></pre>
+<p>Here’s the definition of the function <code>wait</code>. It just literally wait for 1 minute.</p>
+<pre class="r"><code>wait &lt;- function() {
+    print( 'retry after 1 minutes...' )
+    Sys.sleep( 60 )
+}</code></pre>
+<p>The function <code>combine_data</code> is to take the new text, count the frequency of words, and add the result to the table.</p>
+<pre class="r"><code>combine_data = function( all.text, data ) {
+    unnest_tokens( all.text, word, text ) %&gt;%   # split the text
+        count( word, sort=TRUE ) %&gt;%            # count the frequency of words
+        rbind( data ) %&gt;%                       # combine the result with the data
+        group_by( word ) %&gt;%                    
+        summarise( n = sum(n) ) %&gt;%             # merge the rows with the same word
+        return
+}</code></pre>
+<p>And this is the main process of the program.</p>
+<pre class="r"><code>data = tibble( word=character(), n=integer() )  # initialize the table
+total_duration &lt;- 0                             
+for( i in 1:page_total ) {
+    start.time &lt;- Sys.time() 
+
+    # initialize a variable to store all the text
+    all.text = tibble( text = character() ) 
+
+    # iterate through all 50 posts
+    for( tail in get_urls(i) ) {
+
+        # add the text from a post
+        all.text = tibble( text=get_text( tail ) )  %&gt;% 
+            rbind( all.text )
+    }
+
+    # count the words in all 50 posts and update the table
+    data = combine_data( all.text, data )
+    total_duration &lt;&lt;- total_duration + ( Sys.time() - start.time )
+
+    #print the progress of the program
+    cat( 'progress: ', i, '/', page_total, '  estimated: ', total_duration / i * (page_total-i), 'sec\n', sep=''  )
+}</code></pre>
+<pre><code>## progress: 1/1  estimated: 0sec</code></pre>
+<pre class="r"><code># delete the words containing non-English characters
+data &lt;- data[which(!grepl(&quot;[^a-z]+&quot;, data$word)),] 
+
+# sort the words by frequency and output the result
+data &lt;- data[order(data$n, decreasing=TRUE),]
+write.csv(data,file=output_dir,row.names=FALSE) 
+print( data )</code></pre>
+<pre><code>## # A tibble: 2,713 x 2
+##    word      n
+##    &lt;chr&gt; &lt;int&gt;
+##  1 the     792
+##  2 a       415
+##  3 is      402
+##  4 to      373
+##  5 of      347
+##  6 in      301
+##  7 i       299
+##  8 and     277
+##  9 it      258
+## 10 that    233
+## # … with 2,703 more rows</code></pre>
+</div>
 </div>
 
 
