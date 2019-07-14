@@ -7,17 +7,31 @@ library(tidytext)
 setwd('~/Documents/DSP/Data_Science_Programming/w1_thu/')
 output_dir = './data/output.csv'
 
-page_total = 1
-index_url = 'https://english.stackexchange.com/questions?tab=newest&pagesize=50&page=' 
+page_total = 200
+index_url = 'https://english.stackexchange.com/questions?tab=Votes&pagesize=50&page=' 
 base_url = 'https://english.stackexchange.com'
 data = tibble( word=character(), n=integer() )
 
+get_urls <- function( page_num ) {
+    repeat {
+        r <- paste( index_url, page_num, sep='' ) %>% GET()
+        if( http_error( r ) ) {
+            if ( status_code( r ) == 429 ) wait() 
+            else stop( http_status( r ) )
+        }
+        else break 
+    }
+    read_html( r ) %>%
+        html_nodes( '#questions a.question-hyperlink' ) %>% 
+        html_attr( 'href' ) %>% 
+        return
+}
 get_text = function( url ) {
     #html = read_html( paste( base_url, url, sep='' ) )
     repeat{ 
         r <- GET(paste( base_url, url, sep='' ))
         if( http_error( r ) ) {
-            if ( http_status( r ) == 429 ) wait() 
+            if ( status_code( r ) == 429 ) wait() 
             else stop( http_status( r ) )
         }
         else break 
@@ -27,20 +41,6 @@ get_text = function( url ) {
     comment_text = html_nodes( html, ".comment-copy" ) %>% html_text()
     c( post_text, comment_text ) %>% 
         str_replace_all( "[[:punct:]_0123456789]", " ")  %>% 
-        return
-}
-get_urls <- function( page_num ) {
-    repeat {
-        r <- paste( index_url, page_num, sep='' ) %>% GET()
-        if( http_error( r ) ) {
-            if ( http_status( r ) == 429 ) wait() 
-            else stop( http_status( r ) )
-        }
-        else break 
-    }
-    read_html( r ) %>%
-        html_nodes( '#questions a.question-hyperlink' ) %>% 
-        html_attr( 'href' ) %>% 
         return
 }
 combine_data = function( all.text, data ) {
@@ -71,5 +71,5 @@ for( i in 1:page_total ) {
 }
 
 data <- data[which(!grepl("[^a-z]+", data$word)),] 
-data <- data[order(data$n),]
+data <- data[order(data$n, decreasing=TRUE),]
 write.csv(data,file=output_dir,row.names=FALSE) 

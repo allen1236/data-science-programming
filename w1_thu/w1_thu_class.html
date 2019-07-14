@@ -471,15 +471,18 @@ r_unemploy = read.csv('./data/unemployment.csv')</code></pre>
 <h1>Data Collecting</h1>
 <div id="description" class="section level3">
 <h3>Description</h3>
+<p>We (my teammate 王昊謙 and I) want to analyse the relation between word frequency and the number of examples in some of the most frequently used dictionaries. Since we haven’t think of the details, we simply compute the word frequency from a forum and count the examples in some dictionaries in this homework.</p>
+<p>This program computes the word frequency of the post and comments on a forum of stack exchange (<a href="https://english.stackexchange.com/" class="uri">https://english.stackexchange.com/</a>). It reads the posts from page 1 to the desired page number (it is set to 1 here for demo), with 50 posts in each page.</p>
+<p>However, since the website will block the request if the program send too many requests in a short period, the program will sleep and retry after one minute when http_error 429 (too many requests) occurs,</p>
 </div>
 <div id="code-1" class="section level3">
 <h3>Code</h3>
 <p>Here is the setup of some parameters.</p>
 <pre class="r"><code>output_dir = './data/output.csv'
-page_total = 1      # 50 posts in a page
-index_url = 'https://english.stackexchange.com/questions?tab=newest&amp;pagesize=50&amp;page='
+page_total = 1  # 50 posts in a page
+index_url = 'https://english.stackexchange.com/questions?tab=Votes&amp;pagesize=50&amp;page='
 base_url = 'https://english.stackexchange.com'</code></pre>
-<p>The function <code>get_urls</code> is to get the urls of 50 posts from a page. And the function <code>get_text</code> is to get all the content and comments from a post.</p>
+<p>The function <code>get_urls</code> gets the urls of 50 posts from a page. And the function <code>get_text</code> gets all the content and comments from a post.</p>
 <pre class="r"><code>get_urls &lt;- function( page_num ) {
 
     # if an http error occur and the status code is 429 (too many requests),
@@ -487,8 +490,8 @@ base_url = 'https://english.stackexchange.com'</code></pre>
     repeat {
         r &lt;- paste( index_url, page_num, sep='' ) %&gt;% GET()
         if( http_error( r ) ) {
-            if ( http_status( r ) == 429 ) wait() 
-            else stop( http_status( r ) )
+            if ( status_code( r ) == 429 ) wait() 
+            else stop( status_code( r ) )
         }
         else break 
     }
@@ -506,8 +509,8 @@ get_text = function( url ) {
     repeat{ 
         r &lt;- GET(paste( base_url, url, sep='' ))
         if( http_error( r ) ) {
-            if ( http_status( r ) == 429 ) wait() 
-            else stop( http_status( r ) )
+            if ( status_code( r ) == 429 ) wait() 
+            else stop( status_code( r ) )
         }
         else break 
     }
@@ -524,12 +527,12 @@ get_text = function( url ) {
         str_replace_all( &quot;[^a-zA-Z]&quot;, &quot; &quot;)  %&gt;% 
         return
 }</code></pre>
-<p>Here’s the definition of the function <code>wait</code>. It just literally wait for 1 minute.</p>
+<p>Here’s the definition of the function <code>wait</code>. It just literally waits for 1 minute.</p>
 <pre class="r"><code>wait &lt;- function() {
     print( 'retry after 1 minutes...' )
     Sys.sleep( 60 )
 }</code></pre>
-<p>The function <code>combine_data</code> is to take the new text, count the frequency of words, and add the result to the table.</p>
+<p>The function <code>combine_data</code> takes the new text as parameter, counts the frequency of words, and adds the result to the table.</p>
 <pre class="r"><code>combine_data = function( all.text, data ) {
     unnest_tokens( all.text, word, text ) %&gt;%   # split the text
         count( word, sort=TRUE ) %&gt;%            # count the frequency of words
@@ -570,20 +573,20 @@ data &lt;- data[which(!grepl(&quot;[^a-z]+&quot;, data$word)),]
 data &lt;- data[order(data$n, decreasing=TRUE),]
 write.csv(data,file=output_dir,row.names=FALSE) 
 print( data )</code></pre>
-<pre><code>## # A tibble: 2,713 x 2
+<pre><code>## # A tibble: 10,198 x 2
 ##    word      n
 ##    &lt;chr&gt; &lt;int&gt;
-##  1 the     792
-##  2 a       415
-##  3 is      402
-##  4 to      373
-##  5 of      347
-##  6 in      301
-##  7 i       299
-##  8 and     277
-##  9 it      258
-## 10 that    233
-## # … with 2,703 more rows</code></pre>
+##  1 the    6499
+##  2 a      3510
+##  3 to     3053
+##  4 is     2769
+##  5 of     2613
+##  6 in     2525
+##  7 and    2418
+##  8 i      2377
+##  9 it     2135
+## 10 that   1897
+## # … with 10,188 more rows</code></pre>
 </div>
 </div>
 

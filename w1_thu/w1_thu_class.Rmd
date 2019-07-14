@@ -104,19 +104,35 @@ head(data)
 
 ### Description
 
+We (my teammate 王昊謙 and I) want to analyse the relation between 
+word frequency and the number of examples in some of the most frequently used
+dictionaries. Since we haven't think of the details,
+we simply compute the word frequency from a forum and count the examples in some dictionaries in this homework.
+
+This program computes the word frequency of the post and comments on 
+a forum of stack exchange 
+([https://english.stackexchange.com/](https://english.stackexchange.com/)). 
+It reads the posts from page 1 to the desired page number (it is set to 1 here for demo), with 50 posts in each page.
+
+However, since the website will block the request 
+if the program send too many requests in a short period, 
+the program will sleep and retry after one minute
+when http_error 429 (too many requests) occurs,
+
+
 ### Code
 
 Here is the setup of some parameters.
 
 ```{r}
 output_dir = './data/output.csv'
-page_total = 1      # 50 posts in a page
-index_url = 'https://english.stackexchange.com/questions?tab=newest&pagesize=50&page='
+page_total = 1  # 50 posts in a page
+index_url = 'https://english.stackexchange.com/questions?tab=Votes&pagesize=50&page='
 base_url = 'https://english.stackexchange.com'
 ```
 
-The function `get_urls` is to get the urls of 50 posts from a page. 
-And the function `get_text` is to get all the content and comments from a post.
+The function `get_urls` gets the urls of 50 posts from a page. 
+And the function `get_text` gets all the content and comments from a post.
 
 ```{r}
 get_urls <- function( page_num ) {
@@ -126,8 +142,8 @@ get_urls <- function( page_num ) {
     repeat {
         r <- paste( index_url, page_num, sep='' ) %>% GET()
         if( http_error( r ) ) {
-            if ( http_status( r ) == 429 ) wait() 
-            else stop( http_status( r ) )
+            if ( status_code( r ) == 429 ) wait() 
+            else stop( status_code( r ) )
         }
         else break 
     }
@@ -145,8 +161,8 @@ get_text = function( url ) {
     repeat{ 
         r <- GET(paste( base_url, url, sep='' ))
         if( http_error( r ) ) {
-            if ( http_status( r ) == 429 ) wait() 
-            else stop( http_status( r ) )
+            if ( status_code( r ) == 429 ) wait() 
+            else stop( status_code( r ) )
         }
         else break 
     }
@@ -165,7 +181,7 @@ get_text = function( url ) {
 }
 ```
 
-Here's the definition of the function `wait`. It just literally wait for 1 minute.
+Here's the definition of the function `wait`. It just literally waits for 1 minute.
 
 ```{r}
 wait <- function() {
@@ -174,8 +190,9 @@ wait <- function() {
 }
 ```
 
-The function `combine_data` is to take the new text, count the frequency of words,
-and add the result to the table.
+The function `combine_data` takes the new text as parameter,
+counts the frequency of words,
+and adds the result to the table.
 
 ```{r}
 combine_data = function( all.text, data ) {
