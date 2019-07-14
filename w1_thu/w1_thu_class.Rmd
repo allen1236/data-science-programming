@@ -106,7 +106,7 @@ head(data)
 
 We (my teammate 王昊謙 and I) want to analyse the relation between 
 word frequency and the number of examples in some of the most frequently used
-dictionaries. Since we haven't think of the details,
+dictionaries. Since we haven't thought of the details,
 we simply compute the word frequency from a forum and count the examples in some dictionaries in this homework.
 
 This program computes the word frequency of the post and comments on 
