@@ -1,0 +1,9 @@
+stackoverflow
+gaming.stackexchange
+english.stackexchange
+math.stackexchange
+askubuntu
+serverfault
+superuser
+1
+40
