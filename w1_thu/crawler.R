@@ -5,12 +5,12 @@ library(stringr)
 library(tidytext)
 
 setwd('~/Documents/DSP/Data_Science_Programming/w1_thu/')
-output_dir = './data/output.csv'
 
+output_dir = './data/output.csv'
 page_total = 400
 index_url = 'https://english.stackexchange.com/questions?tab=Votes&pagesize=50&page=' 
 base_url = 'https://english.stackexchange.com'
-data = tibble( word=character(), n=integer() )
+time_to_wait = 30 #sec
 
 get_urls <- function( page_num ) {
     repeat {
@@ -56,14 +56,16 @@ wait <- function() {
     Sys.sleep( 10 )
 }
 
+data = tibble( word=character(), n=integer() )
 start.time <- proc.time() 
 for( i in 1:page_total ) {
-    Sys.sleep( 40 )
     all.text = tibble( text = character() )
+    start.time_loop <- proc.time() 
     for( tail in get_urls(i) ) {
         all.text = tibble( text=get_text( tail ) )  %>% 
             rbind( all.text )
     }
+    Sys.sleep( time_to_wait - (proc.time()-start.time_loop)[3] )
     data = combine_data( all.text, data )
     cat( 'progress: ', i, '/', page_total, '  estimated: ', ( (proc.time()-start.time) / i * (page_total-i) )[3], 'sec\n', sep=''  )
 }

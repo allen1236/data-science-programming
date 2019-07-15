@@ -159,7 +159,7 @@ get_urls <- function( page_num ) {
         html_attr( 'href' ) %>% 
         return
 }
-get_text = function( url ) {
+get_text <- function( url ) {
 
     # if an http error occur and the status code is 429 (too many requests),
     # retry after 1 minute
