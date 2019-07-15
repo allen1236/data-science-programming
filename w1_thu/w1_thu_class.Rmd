@@ -114,10 +114,14 @@ a forum of stack exchange
 ([https://english.stackexchange.com/](https://english.stackexchange.com/)). 
 It reads the posts from page 1 to the desired page number (it is set to 1 here for demo), with 50 posts in each page.
 
-However, since the website will block the request 
-if the program send too many requests in a short period, 
-the program will sleep and retry after one minute
-when http_error 429 (too many requests) occurs,
+(I also implemented the program that scraps from other forums like reddit, but I didn't put it here since there're still some minor bugs)
+
+However, since the program will be block
+if it send too many requests in a short period: 
+
+- I used `Sys.sleep(sec)` to limit the frequency of sending requests.
+- When http_error 429 (too many requests) occurs,
+the program will sleep and retry after one minute.
 
 
 ### Code
@@ -129,6 +133,7 @@ output_dir = './data/output.csv'
 page_total = 1  # 50 posts in a page
 index_url = 'https://english.stackexchange.com/questions?tab=Votes&pagesize=50&page='
 base_url = 'https://english.stackexchange.com'
+time_to_wait = 30 #sec
 ```
 
 The function `get_urls` gets the urls of 50 posts from a page. 
@@ -208,13 +213,16 @@ combine_data = function( all.text, data ) {
 And this is the main process of the program.
 
 ```{r}
-data = tibble( word=character(), n=integer() )  # initialize the table
-total_duration <- 0                             
+data <- tibble( word=character(), n=integer() )  # initialize the table
+
+# record the start time
+start.time <- proc.time()
+
 for( i in 1:page_total ) {
-    start.time <- Sys.time() 
 
     # initialize a variable to store all the text
-    all.text = tibble( text = character() ) 
+    all.text <- tibble( text = character() ) 
+    start.time_loop <- proc.time() 
 
     # iterate through all 50 posts
     for( tail in get_urls(i) ) {
@@ -225,11 +233,13 @@ for( i in 1:page_total ) {
     }
 
     # count the words in all 50 posts and update the table
-    data = combine_data( all.text, data )
-    total_duration <<- total_duration + ( Sys.time() - start.time )
+    data <- combine_data( all.text, data )
 
-    #print the progress of the program
-    cat( 'progress: ', i, '/', page_total, '  estimated: ', total_duration / i * (page_total-i), 'sec\n', sep=''  )
+    # wait for a while
+    Sys.sleep( time_to_wait - (proc.time()-start.time_loop)[3] )
+
+    #print the progress of the program (and calculate the estimated time left)
+    cat( 'progress: ', i, '/', page_total, '  estimated: ', ((proc.time()-start.time)/i*(page_total-i))[3], 'sec\n', sep=''  )
 }
 
 # delete the words containing non-English characters

@@ -7,7 +7,7 @@ library(tidytext)
 setwd('~/Documents/DSP/Data_Science_Programming/w1_thu/')
 output_dir = './data/output.csv'
 
-page_total = 200
+page_total = 400
 index_url = 'https://english.stackexchange.com/questions?tab=Votes&pagesize=50&page=' 
 base_url = 'https://english.stackexchange.com'
 data = tibble( word=character(), n=integer() )
@@ -52,22 +52,20 @@ combine_data = function( all.text, data ) {
         return
 }
 wait <- function() {
-    print( 'retry after 1 minutes...' )
-    Sys.sleep( 60 )
+    print( 'retry after 10 sec...' )
+    Sys.sleep( 10 )
 }
 
-total_duration <- 0
-
+start.time <- proc.time() 
 for( i in 1:page_total ) {
-    start.time <- Sys.time() 
+    Sys.sleep( 40 )
     all.text = tibble( text = character() )
     for( tail in get_urls(i) ) {
         all.text = tibble( text=get_text( tail ) )  %>% 
             rbind( all.text )
     }
     data = combine_data( all.text, data )
-    total_duration <<- total_duration + ( Sys.time() - start.time )
-    cat( 'progress: ', i, '/', page_total, '  estimated: ', total_duration / i * (page_total-i), 'sec\n', sep=''  )
+    cat( 'progress: ', i, '/', page_total, '  estimated: ', ( (proc.time()-start.time) / i * (page_total-i) )[3], 'sec\n', sep=''  )
 }
 
 data <- data[which(!grepl("[^a-z]+", data$word)),] 

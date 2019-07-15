@@ -473,7 +473,12 @@ r_unemploy = read.csv('./data/unemployment.csv')</code></pre>
 <h3>Description</h3>
 <p>We (my teammate 王昊謙 and I) want to analyse the relation between word frequency and the number of examples in some of the most frequently used dictionaries. Since we haven’t thought of the details, we simply compute the word frequency from a forum and count the examples in some dictionaries in this homework.</p>
 <p>This program computes the word frequency of the post and comments on a forum of stack exchange (<a href="https://english.stackexchange.com/" class="uri">https://english.stackexchange.com/</a>). It reads the posts from page 1 to the desired page number (it is set to 1 here for demo), with 50 posts in each page.</p>
-<p>However, since the website will block the request if the program send too many requests in a short period, the program will sleep and retry after one minute when http_error 429 (too many requests) occurs,</p>
+<p>(I also implemented the program that scraps from other forums like reddit, but I didn’t put it here since there’re still some minor bugs)</p>
+<p>However, since the program will be block if it send too many requests in a short period:</p>
+<ul>
+<li>I used <code>Sys.sleep(sec)</code> to limit the frequency of sending requests.</li>
+<li>When http_error 429 (too many requests) occurs, the program will sleep and retry after one minute.</li>
+</ul>
 </div>
 <div id="code-1" class="section level3">
 <h3>Code</h3>
@@ -481,7 +486,8 @@ r_unemploy = read.csv('./data/unemployment.csv')</code></pre>
 <pre class="r"><code>output_dir = './data/output.csv'
 page_total = 1  # 50 posts in a page
 index_url = 'https://english.stackexchange.com/questions?tab=Votes&amp;pagesize=50&amp;page='
-base_url = 'https://english.stackexchange.com'</code></pre>
+base_url = 'https://english.stackexchange.com'
+time_to_wait = 30 #sec</code></pre>
 <p>The function <code>get_urls</code> gets the urls of 50 posts from a page. And the function <code>get_text</code> gets all the content and comments from a post.</p>
 <pre class="r"><code>get_urls &lt;- function( page_num ) {
 
@@ -542,13 +548,16 @@ get_text = function( url ) {
         return
 }</code></pre>
 <p>And this is the main process of the program.</p>
-<pre class="r"><code>data = tibble( word=character(), n=integer() )  # initialize the table
-total_duration &lt;- 0                             
+<pre class="r"><code>data &lt;- tibble( word=character(), n=integer() )  # initialize the table
+
+# record the start time
+start.time &lt;- proc.time()
+
 for( i in 1:page_total ) {
-    start.time &lt;- Sys.time() 
 
     # initialize a variable to store all the text
-    all.text = tibble( text = character() ) 
+    all.text &lt;- tibble( text = character() ) 
+    start.time_loop &lt;- proc.time() 
 
     # iterate through all 50 posts
     for( tail in get_urls(i) ) {
@@ -559,11 +568,13 @@ for( i in 1:page_total ) {
     }
 
     # count the words in all 50 posts and update the table
-    data = combine_data( all.text, data )
-    total_duration &lt;&lt;- total_duration + ( Sys.time() - start.time )
+    data &lt;- combine_data( all.text, data )
 
-    #print the progress of the program
-    cat( 'progress: ', i, '/', page_total, '  estimated: ', total_duration / i * (page_total-i), 'sec\n', sep=''  )
+    # wait for a while
+    Sys.sleep( time_to_wait - (proc.time()-start.time_loop)[3] )
+
+    #print the progress of the program (and calculate the estimated time left)
+    cat( 'progress: ', i, '/', page_total, '  estimated: ', ((proc.time()-start.time)/i*(page_total-i))[3], 'sec\n', sep=''  )
 }</code></pre>
 <pre><code>## progress: 1/1  estimated: 0sec</code></pre>
 <pre class="r"><code># delete the words containing non-English characters
