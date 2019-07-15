@@ -1,0 +1,37 @@
+---
+title: "Class Note - Week 2"
+author: "Allen Ho"
+date: "7/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+library(dplyr)
+library(httr)
+library(rvest)
+library(stringr)
+library(tidytext)
+library(ggplot2)
+setwd('~/Documents/DSP/Data_Science_Programming/w2_mon/')
+```
+
+# Data Visualization
+
+```{r}
+diamonds
+ggplot( data=diamonds, aes( x=carat, y=price, color=clarity ) ) +
+    geom_point() +
+    facet_grid( cut~. ) 
+ggplot( data=diamonds, aes( x=cut ) ) +
+    geom_bar( fill='black', colour='black' )
+ggplot( data=diamonds, aes( x=clarity, fill=cut ) ) +
+    geom_bar( position='fill' )
+ggplot( data=diamonds, aes( x="",  fill=cut )) + 
+    geom_bar(width = 1) +
+    coord_polar(theta = "y", start=0) + 
+    labs(fill="cut", 
+       x=NULL, 
+       y=NULL, 
+       title="Pie Chart of Cut")
+```

@@ -6,11 +6,11 @@ library(tidytext)
 
 setwd('~/Documents/DSP/Data_Science_Programming/w1_thu/')
 
-output_dir = './data/output.csv'
-page_total = 400
+output_dir = './data/output_english_250.csv'
+page_total = 5
 index_url = 'https://english.stackexchange.com/questions?tab=Votes&pagesize=50&page=' 
 base_url = 'https://english.stackexchange.com'
-time_to_wait = 30 #sec
+time_to_wait = 53 #sec
 
 get_urls <- function( page_num ) {
     repeat {
@@ -40,7 +40,7 @@ get_text = function( url ) {
     post_text = html_nodes( html, ".post-text" ) %>% html_text()
     comment_text = html_nodes( html, ".comment-copy" ) %>% html_text()
     c( post_text, comment_text ) %>% 
-        str_replace_all( "[[:punct:]_0123456789]", " ")  %>% 
+        str_replace_all( "[^a-zA-Z']", " ")  %>% 
         return
 }
 combine_data = function( all.text, data ) {
@@ -65,11 +65,12 @@ for( i in 1:page_total ) {
         all.text = tibble( text=get_text( tail ) )  %>% 
             rbind( all.text )
     }
-    Sys.sleep( time_to_wait - (proc.time()-start.time_loop)[3] )
+    if ( ( time_left <- time_to_wait - (proc.time()-start.time_loop)[3] ) > 0 ) 
+        Sys.sleep( time_to_wait - (proc.time()-start.time_loop)[3] )
     data = combine_data( all.text, data )
     cat( 'progress: ', i, '/', page_total, '  estimated: ', ( (proc.time()-start.time) / i * (page_total-i) )[3], 'sec\n', sep=''  )
 }
 
-data <- data[which(!grepl("[^a-z]+", data$word)),] 
+data <- data[which(!grepl("[^a-z']+", data$word)),] 
 data <- data[order(data$n, decreasing=TRUE),]
 write.csv(data,file=output_dir,row.names=FALSE) 

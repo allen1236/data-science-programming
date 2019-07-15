@@ -1,0 +1,51 @@
+---
+title: "Class Note - Week 2"
+author: "Allen Ho"
+date: "7/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+packages <- c('dplyr', 'httr', 'rvest', 'stringr', 'tidytext', 'ggplot2')
+lapply(packages, library, character.only = TRUE)
+setwd('~/Documents/DSP/Data_Science_Programming/w2_mon/')
+```
+
+# Data Visualization
+
+### Code
+
+load the data 
+
+```{r}
+
+process_data <- function( raw_data, category ) {
+    new_data <- filter( raw_data, exNum > -1, X < 4001 ) %>%
+        select( word, n, exNum )  %>%
+        cbind( source=category ) %>%
+        return
+}
+# try to do this with a function
+data_english <- read.csv( './data/dictionary_com_output_english_4000.csv' )
+data_gaming <- read.csv( './data/dictionary_com_output_gaming_4000.csv' )
+data_apple <- read.csv( './data/dictionary_com_output_apple_4000.csv' )
+data <- rbind( process_data( data_english, 'english' ), 
+               process_data( data_gaming, 'gaming' ),
+               process_data( data_apple, 'apple' ) )
+print( head(data) )
+ggplot( data=data, aes( x=log(n), y=exNum  ) ) +
+    geom_point() +
+    facet_grid( source~. )
+ggplot( data=data, aes( x=exNum ) ) +
+    geom_bar() +
+    facet_grid( source~. )
+ggplot( data=data, aes( x=reorder(word, n), y=n ) ) +
+    geom_bar( stat='identity' ) +
+    facet_grid( source~. )
+new_data <- mutate( data, interval=cut(n, c(0, 10, 100, 1000, 10000, 100000),
+                             c('0', '1', '2', '3', '4') ) )  
+ggplot( data=new_data, aes( x="",  fill=interval ) ) + 
+    geom_bar(width = 1) +
+    coord_polar(theta = "y", start=0) 
+```
