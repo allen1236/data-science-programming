@@ -8,7 +8,7 @@ setwd('~/Documents/DSP/Data_Science_Programming/crawler/')
 
 page_total <- 400
 posts_per_page <- 50
-time_to_wait <- 40
+time_to_wait <- 42
 progress_path <- './output_crawler/progress_crawler_stackexchange.txt'
 post_num <- page_total * posts_per_page
 
