@@ -7,45 +7,276 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=TRUE)
-packages <- c('dplyr', 'httr', 'rvest', 'stringr', 'tidytext', 'ggplot2')
+packages <- c('dplyr', 'httr', 'rvest', 'stringr', 'tidytext', 'ggplot2', 'wordcloud', 'choroplethr' )
 lapply(packages, library, character.only = TRUE)
 setwd('~/Documents/DSP/Data_Science_Programming/w2_mon/')
 ```
 
+
 # Data Visualization
 
-### Code
+## Description
 
-load the data 
+With the web crawler of stackexchange in the last hw, from the following 5 forums:
+
+- Stack Overflow ([https://stackoverflow.com](https://stackoverflow.com))
+- English Language & Usage ([https://english.stackexchange.com](https://english.stackexchange.com))
+- Arqade ([https://gaming.stackexchange.com](https://gaming.stackexchange.com))
+- Mathematics ([https://math.stackexchange.com](https://math.stackexchange.com))
+- Ask Ubuntu ([https://askubuntu.com](https://askubuntu.com))
+
+I calculate the word frequency of the posts and comments (20k posts on each forum), look up the number of examples on [dictionary.com](https://www.dictionary.com) (with the help of my teammate 王昊謙), and analyse the data. 
+
+## Data
+
+The original data includes the following columns:
+
+- __word__ - the vocabulary 
+- __n__ - the number of appearance on a forum
+- __exNum__ - the number of examples we found on dictionary.com (the value will be -1 if it doesn't exist in the dictionary)
+- __f__ - the percentage of the word's appearance among all words on a forum
+- __forum__ - the forum on which the data is collected (I use the domain name in the addresses to make things easier)
+
+## Code
+
+Here's the setup of some constants.
+
+```{r}
+forum_number <- 5
+forums <- c(
+    'stackoverflow',
+    'english.stackexchange',
+    'gaming.stackexchange',
+    'math.stackexchange',
+    'askubuntu'
+)
+```
+
+I first combine the data of different forum.
+The function `load_from_file` reads and processes the data of each forum.
+
+```{r}
+load_from_file <- function( forum_name ) {
+    paste( './data/output', forum_name, '20000_dict.csv', sep='_' ) %>%
+        read.csv() %>% 
+        select( word, n, exNum ) %>%
+        mutate( f=n/sum(n)*100 ) %>%
+        cbind( forum=forum_name ) %>% 
+        return
+}
+
+wf <- load_from_file( 'stackoverflow' )
+for ( forum_name in forums[2:forum_number] ) {
+    wf <<- load_from_file( forum_name ) %>%
+        rbind( wf )
+}
+
+head( wf )
+```
+
+#### Word Frequency & Number of Examples
+
+To see the relation between word frequency and number of examples in dictionary.com, 
+we can just sum up the word frequency and analyse the average frequency `avg_f`.
+
+We remove the words with `exNum == -1` here since there's no needs to discuss these words.
+```{r}
+
+af <- select( wf, word, n, exNum, f ) %>%
+    group_by( word ) %>%
+    summarize( avg_f=sum(f)/forum_number, exNum=max(exNum) ) %>%
+    filter( exNum != -1 ) %>%
+    arrange( desc(avg_f) ) %>%
+    mutate( ln_avg_f=log(avg_f) )   # we can distinguish the value better with log function
+
+head( af )
+```
+
+However, if we directly plot x and y on a graph, it's hard to understand the relation since there're to many points.
+
+```{r}
+ggplot( data=af, aes( x=log(avg_f), y=exNum ) ) +
+    geom_point()
+```
+
+Therefore, we define the situation that "you can find enough examples in the dictionary" as `exNum >= 10` and split the frequency into some interval.
+Then we calculate the percentage of the words satisfying this condition with respect to each interval of frequency.
 
 ```{r}
 
-process_data <- function( raw_data, category ) {
-    new_data <- filter( raw_data, exNum > -1, X < 4001 ) %>%
-        select( word, n, exNum )  %>%
-        cbind( source=category ) %>%
-        return
+f_split <- mutate( af, enough=(exNum>=10), interval=floor(log(avg_f))+15 ) %>%
+    arrange( desc(interval) ) 
+f_percentage <- group_by( f_split, interval ) %>%
+    summarize( percentage = mean(enough) * 100 )
+
+ggplot( data=f_percentage, aes( x=interval, y=percentage ) ) +
+    geom_line() +
+    geom_point()
+    
+
+f_split %>% filter( interval==9 ) %>% head %>% print
+```
+
+The peak at interval=16, as we can see in the table, is "the" and "to", both having enough examples.
+
+```{r echo=F}
+f_split %>% head() %>% print
+```
+
+For the rest of the statistics, we can see a shape like a small mountain. In my opinion:
+
+- For the words on the right (the most frequently used), we don't have to look them up since we are already familiar with them.
+- For the words on the left (very uncommon words or typos), we don't have to look them up since we won't encounter them usually or it might be some terminologies. (In other words, it's okay that we don't understand the word) 
+
+```{r echo=F}
+f_split %>% filter( interval==3 ) %>% head %>% print
+```
+
+- The words that we really need to understand better, that we need more examples, are those words in the middle (maybe with interval 5-11).
+
+Therefore, I think the dictionary is doing a good job.
+
+#### Relative Frequency Analysis
+
+Now we , again, calculate `avg_f`, the average frequency of each words, and then obtain `rel_f`, which represents "the percentage that a certain word appears this forum".
+
+We remove the words with extremely low frequency here, since it might be some kind of typos or weird words, and might get a `rel_f` of 100%.
+
+```{r}
+rf_raw <- select( wf, word, f ) %>%
+    group_by( word ) %>%
+    summarize( avg_f=sum( f )/forum_number ) %>%
+    merge( wf, by='word' ) %>%
+    mutate( rel_f=f/avg_f * 100/forum_number ) %>%
+    select( word, rel_f, forum, f, n ) %>%
+    arrange( desc(rel_f) )
+
+rf <- filter( rf_raw, f > 0.03 )
+
+head( wf )
+```
+
+If we plot `log(f)` and `rel_f`, we can that there're some points has a high value of
+`rel_f`, which means they are constantly referred to in a forum.
+Those are the points we are interested in.
+
+```{r}
+ggplot( data=rf, aes( x=log(f), y=rel_f ) ) +
+    geom_point()
+```
+
+So, what we want to see is, in comparison with other forums, 
+which words are relatively commonly used in a certain forum.
+
+To see those words, we can use wordcloud to display the word. 
+(We use `exp(rel_f/15)` here to increase the difference between each word)
+
+Here's the function to generate the cloud.
+
+```{r}
+rel_f_cloud <- function( forum_name ) {
+    table <- filter( rf, forum==forum_name ) %>%
+        mutate( exp_rel_f=exp(rel_f/15-1) )
+    wordcloud( table$word, table$exp_rel_f, scale=c(3,.5),
+        max.words=100, random.order=FALSE, colors=brewer.pal(5, "Dark2") )
 }
-# try to do this with a function
-data_english <- read.csv( './data/dictionary_com_output_english_4000.csv' )
-data_gaming <- read.csv( './data/dictionary_com_output_gaming_4000.csv' )
-data_apple <- read.csv( './data/dictionary_com_output_apple_4000.csv' )
-data <- rbind( process_data( data_english, 'english' ), 
-               process_data( data_gaming, 'gaming' ),
-               process_data( data_apple, 'apple' ) )
-print( head(data) )
-ggplot( data=data, aes( x=log(n), y=exNum  ) ) +
-    geom_point() +
-    facet_grid( source~. )
-ggplot( data=data, aes( x=exNum ) ) +
-    geom_bar() +
-    facet_grid( source~. )
-ggplot( data=data, aes( x=reorder(word, n), y=n ) ) +
-    geom_bar( stat='identity' ) +
-    facet_grid( source~. )
-new_data <- mutate( data, interval=cut(n, c(0, 10, 100, 1000, 10000, 100000),
-                             c('0', '1', '2', '3', '4') ) )  
-ggplot( data=new_data, aes( x="",  fill=interval ) ) + 
-    geom_bar(width = 1) +
+```
+
+And here are the results. (the wordcloud of gaming.stackexchange)
+
+```{r}
+rel_f_cloud( 'gaming.stackexchange' )
+```
+
+
+### WARNING: THE CONTENT BELOW MIGHT BE OFFENSIVE OR DISTURBING TO SOME PEOPLE
+
+
+So, with the relative frequency of words, I decide to see which forum is the rudest one
+(most frequently curse), and here's the result.
+
+I define a set of curse words, and plot a pie chart to see where these words from.
+
+```{r}
+curse_words <- c( 'fuck', 'hell', 'shit', 'fucking', 'idiot', 'ass', 
+            'freakin', 'bitch', 'bitches', 'cunt', 'bloody', 'asshole', 
+            'fucked', 'damn', 'crap', 'god', 'motherfucker', 
+            'balls', 'dick', 'tits', 'pussy', 'cock',
+            'son', 'jesus', 'fucks', 'wtf', 'f', 'dumb', 'dumbass',
+            'bastard' )
+filter( rf_raw, word %in% curse_words ) %>% 
+    select( word, rel_f, forum ) %>%
+    group_by( forum ) %>%
+    summarize( total=sum(rel_f) ) %>% 
+    ggplot( aes( x='', y=total, fill=forum ) ) +
+    geom_bar( width=1, stat='identity' ) +
     coord_polar(theta = "y", start=0) 
 ```
+
+Apparently, __users on English Grammar & Usage swear a lot__. 
+
+Maybe they are just discussing the usage and origin of those curse words...?
+
+Look at the top ten words, every one of them has a `rel_f` over 85%.
+
+```{r}
+filter( rf_raw, word %in% curse_words, forum=='english.stackexchange' ) %>% 
+    head( 10 ) %>%
+    ggplot( aes( x=reorder(word, desc(rel_f) ), y=rel_f ) ) +
+    geom_bar( stat='identity' ) 
+```
+
+How ever, if we look at the chart of every words, we can find some exceptions.
+(which means the percentage on english forum is lesser than 20%)
+
+```{r}
+filter( rf_raw, word %in% c('balls', 'f', 'wtf', 'hell') ) %>% 
+    ggplot( aes( x=word, y=rel_f, fill=forum ) ) +
+    geom_bar( position='fill', stat='identity' ) 
+```
+
+- for the word "hell" on gaming forum, I think it's just a common word in video games.  
+- for "balls" and "f" on math forum, I think they're really just discussing math problems.
+
+Like "there are three red balls in the box...," or "the function f is..."
+- for the word "wtf" on stackoverflow and askubuntu, 
+maybe they're talking about [this](https://en.wikipedia.org/wiki/.wtf).
+
+I also plot a pie chart for the words "thanks", "thank", and "thx". 
+
+```{r}
+good_words <- c( 'thx', 'thanks', 'thank' )
+filter( rf_raw, word %in% good_words ) %>% 
+    select( word, rel_f, forum ) %>%
+    group_by( forum ) %>%
+    summarize( total=sum(rel_f) ) %>% 
+    ggplot( aes( x='', y=total, fill=forum ) ) +
+    geom_bar( width=1, stat='identity' ) +
+    coord_polar(theta = "y", start=0) 
+```
+
+Well, It seems that programmers are quite grateful.
+
+## Map Plotting
+
+Here we plot the numbers of appearance of the name of states on these forums.
+
+But the data might not be accurate since we only count the appearance of
+"every single word", but some state names are composed of multiple words.
+We use the most significant word in their name to filter.
+
+```{r}
+data(df_pop_state) 
+states <- scan( './data/states.txt', what='character', sep='\n' )
+states_full <- scan( './data/states_full.txt', what='character', sep='\n' )
+states_full <- data.frame( region=states_full, word=states )
+filter( wf, word %in% states ) %>%
+    group_by( word ) %>%
+    summarize( value = sum(n) ) %>% 
+    merge( states_full, by='word' ) %>% 
+    merge( select(df_pop_state, region), by='region' ) %>%
+    select( region, value ) %>%
+    state_choropleth() 
+```
+
+
