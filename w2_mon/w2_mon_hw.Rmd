@@ -1,5 +1,5 @@
 ---
-title: "Class Note - Week 2"
+title: "HW 2"
 author: "Allen Ho"
 date: "7/11/2019"
 output: html_document
@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=TRUE)
-packages <- c('dplyr', 'httr', 'rvest', 'stringr', 'tidytext', 'ggplot2', 'wordcloud', 'choroplethr' )
+packages <- c('dplyr', 'stringr', 'ggplot2', 'wordcloud', 'choroplethr' )
 lapply(packages, library, character.only = TRUE)
 setwd('~/Documents/DSP/Data_Science_Programming/w2_mon/')
 ```
