@@ -110,7 +110,7 @@ f_percentage <- group_by( f_split, interval ) %>%
     summarize( percentage = mean(enough) * 100 )
 
 ggplot( data=f_percentage, aes( x=interval, y=percentage ) ) +
-    geom_line() +
+    geom_line( color='red' ) +
     geom_point()
     
 
@@ -236,9 +236,7 @@ filter( rf_raw, word %in% c('balls', 'f', 'wtf', 'hell') ) %>%
 ```
 
 - for the word "hell" on gaming forum, I think it's just a common word in video games.  
-- for "balls" and "f" on math forum, I think they're really just discussing math problems.
-
-Like "there are three red balls in the box...," or "the function f is..."
+- for "balls" and "f" on math forum, I think they're really just discussing math problems. Like "there are three red balls in the box...," or "the function f is..."
 - for the word "wtf" on stackoverflow and askubuntu, 
 maybe they're talking about [this](https://en.wikipedia.org/wiki/.wtf).
 
