@@ -127,11 +127,6 @@ For the rest of the statistics, we can see a shape like a small mountain. In my 
 
 - For the words on the right (the most frequently used), we don't have to look them up since we are already familiar with them.
 - For the words on the left (very uncommon words or typos), we don't have to look them up since we won't encounter them usually or it might be some terminologies. (In other words, it's okay that we don't understand the word) 
-
-```{r echo=F}
-f_split %>% filter( interval==3 ) %>% head %>% print
-```
-
 - The words that we really need to understand better, that we need more examples, are those words in the middle (maybe with interval 5-11).
 
 Therefore, I think the dictionary is doing a good job.
