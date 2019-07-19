@@ -1,14 +1,12 @@
-lapply( c(
-    'dplyr',
-    'tm',
-    'tmcn',
-    'NLP',
-    'jiebaRD',
-    'jiebaR',
-    'RColorBrewer',
-    'wordcloud',
-    'Matrix'
-), library, character.only=T )
+library('dplyr')
+library('tm')
+library('tmcn')
+library('NLP')
+library('jiebaRD')
+library('jiebaR')
+library('RColorBrewer')
+library('wordcloud')
+library('Matrix')
 
 setwd( '~/Documents/DSP/Data_Science_Programming/w2_thu/' )
 #raw_data <- scan( './data/mistborn_clean.txt', what='character', sep='\n' )
@@ -36,6 +34,25 @@ tdm <- as.matrix( tdm[,2:(chap_num+1)] )
 colnames( tdm ) <- 1:chap_num
 rownames( tdm ) <- row_name
 
+str <- '
+CoMatrix <- tdm %*% t(tdm)
+total_occurrences <- rowSums(CoMatrix)
+smallid = which(total_occurrences < median(total_occurrences))
+co_occurrence_d = CoMatrix / total_occurrences
+co_occurrence_s = co_occurrence_d[-as.vector(smallid),-as.vector(smallid)]
+
+require(igraph)
+graph <- graph.adjacency(round(co_occurrence_s*10),
+                         mode="undirected",
+                         diag=FALSE)
+plot(graph,
+     vertex.label=names(data),
+     edge.arrow.mode=0,
+     vertex.size=1,
+     edge.width=E(graph)$weight,
+     layout=layout_with_fr) 
+'
+
 # inplement tfidf
 tf <- apply( tdm, 2, function(c){c/sum(c)} )
 idf <- function( word ) {
@@ -47,5 +64,4 @@ tfidf <- apply( tf, 2, function(r){r*idf} )
 # grab the top 10 words
 rank <- function( col ) { row_name[order(-col)][1:10] }
 rank <- apply( tfidf, 2, rank )
-
-
+rank %>% print
