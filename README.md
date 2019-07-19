@@ -12,5 +12,5 @@ Department: NTU EE2
 - [class note](https://b07901135.github.io/Data_Science_Programming/w2_mon/w2_mon_class.html)
 - [HW2](https://b07901135.github.io/Data_Science_Programming/w2_mon/w2_mon_hw.html)
 ### Week 2 - 07/18 THU
-- [class note](https://b07901135.github.io/Data_Science_Programming/w2_mon/w2_thu_class.html)
+- [class note](https://b07901135.github.io/Data_Science_Programming/w2_thu/w2_thu_class.html)
 - HW3
