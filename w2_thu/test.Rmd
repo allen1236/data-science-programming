@@ -1,0 +1,161 @@
+---
+title: "HW3"
+author: "Allen Ho"
+date: "7/20/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+library(dplyr)
+library(tm)
+library(tmcn)
+library(NLP)
+library(jiebaRD)
+library(jiebaR)
+library(RColorBrewer)
+library(wordcloud)
+library(Matrix)
+library(ggplot2)
+library(reshape2)
+setwd('~/Documents/DSP/Data_Science_Programming/w2_thu/')
+```
+
+## Crawler
+
+Here's the code of ptt crawler. I will just display the code here and used load its output from ./data since it takes a lot of to run.
+
+```{r, eval=F, code=readLines('../crawler/ptt/crawler_group_by_month.R')}
+```
+
+Load the documents.
+
+```{r}
+doc <- Corpus( DirSource('./data/studyabroad') ) %>%
+    tm_map( removePunctuation ) %>%
+    tm_map( removeNumbers ) %>%
+    tm_map( function(word) {
+        gsub( "[A-Za-z0-9]", "", word )
+    })
+```
+
+## Analysis
+
+Here's the code that analyze the text of each month on ptt-studyabroad.
+
+```{r}
+cutter <- worker()
+
+# add some new words
+new_words <- read.csv( './data/new_user_word.csv', header=T )
+new_user_word( cutter, as.character(new_words$word), as.character(new_words$pos) )
+
+# create a function that split strins into words
+segments <- function(d) { 
+    seg <- segment( d[[1]], cutter ) 
+    chosen <- which( nchar(seg) > 1 )
+    seg[chosen] %>% return
+}
+segments <- lapply( doc, segments )
+```
+ 
+count the words, create the `data.frame` of term-document matrix `tdm`, and turn it into a matrix (with words as row names and month as column names)
+
+```{r, warning=F}
+tokens <- function( word ) { as.data.frame( table( word ) ) }
+tokens <- lapply( segments, tokens ) #a list of vector
+
+# combine the vector of each document (in the list) into a matrix
+tdm <- tokens[[1]]
+n <- length( segments )
+for( id in 2:n) {
+    tdm <- merge( tdm, tokens[[id]], by='word', all=T ) 
+}
+#colnames( tdm ) <- gsub( '.txt', '',colnames( tdm ) )
+
+# change all the "NA" into 0
+tdm[is.na(tdm)] <- 0
+
+# turn tdm into a matrix and rename columns and rows
+row_name <- tdm$word
+col_name <- gsub( '.txt', '', names(doc) )
+tdm <- as.matrix( tdm[,2:(n+1)] )
+colnames( tdm ) <- col_name
+rownames( tdm ) <- row_name
+head( tdm )
+```
+
+calculate `tf`, `idf`, and then `tfidf`.
+
+I modified the formula of idf since many of the important words appear in every month. 
+If I use the original n as denominator, the frequency of these words will become zero.
+
+```{r}
+tf <- apply( tdm, 2, function(c){c/sum(c)} )
+idf <- function( word ) { log2( (n+0.5) / nnzero(word) ) }
+idf <- apply( tdm, 1, idf )
+tfidf <- apply( tf, 2, function(r){r*idf} )
+head( tfidf )
+```
+
+find the top 6 words of each month (with `tfidf` value), and find the top 8 words
+that appears the most.
+
+```{r}
+# grab the top 10 words and count the top 8 words
+top <- function( col ) { rownames(tfidf)[order(-col)][1:6] }
+top <- apply( tfidf, 2, top ) %>% print %>%
+    as.matrix() %>%
+    table() %>%
+    as.data.frame()
+top_word <- top[order(-top$Freq),][1:8,1] %>% as.character() %>% print
+
+# arrange months
+months <- c( 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' )
+```
+
+plot the numbers of the top 8 words vs month (using `tdm`)
+
+```{r}
+# reshape top8 to plot
+top_plot <- tdm[top_word,months] %>% melt 
+head( top_plot )
+names( top_plot ) <- c( 'word', 'month', 'frequency' )
+ggplot( data=top_plot, aes( x=month, y=frequency, group=word, colour=word ) ) + 
+    geom_line() + 
+    geom_point()
+```
+
+There's little information in this graph because the number of words mainly just follow the total amount of text.
+
+Now we plot the frequency of the top 8 words vs month (using `tf`).
+
+```{r}
+# reshape top8 to plot
+top_plot <- tf[top_word,months] %>% melt 
+head( top_plot )
+names( top_plot ) <- c( 'word', 'month', 'frequency' )
+ggplot( data=top_plot, aes( x=month, y=frequency, group=word, colour=word ) ) + 
+    geom_line() + 
+    geom_point()
+```
+
+According to the graph, the word "恭喜" has a peak around Feb and Mar. Maybe it's because the
+result of applications usually come out in that period. 
+
+plot the amount of text (file size) of each month.
+
+```{r}
+filenames <- as.array( paste0( './data/studyabroad/', months, '.txt' ) )
+sizes <- apply( filenames, 1, file.size ) / 1024
+size_plot <- data.frame( month=months, size=sizes )
+size_plot$month <- factor( size_plot$month, levels=months ) 
+head( size_plot )
+ggplot( data=size_plot, aes( x=month, y=size ) ) +
+    geom_bar( stat='identity' )
+```
+
+I have some trouble when trying to trying the important words in all the text. The algorithm of tfidf assume that, if a word appears in many documents, then it is not very important. But, since I divide all text (from 2005 to now) into 12 parts, some important words might appear in every part (such as "學校", "申請", "美國"). Therefore, they will be considered less important along with some words like "可以", "如果", "沒有", while their frequency actually vary in different months.
+
+
