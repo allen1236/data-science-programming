@@ -14,3 +14,5 @@ Department: NTU EE2
 ### Week 2 - 07/18 THU
 - [practice](https://github.com/b07901135/Data_Science_Programming/blob/master/w2_thu/ex.R)
 - [HW3](https://b07901135.github.io/Data_Science_Programming/w2_thu/test.html)
+### Week 3 - 07/22 MON
+- [Project](https://github.com/b07901135/2019dsp-summer-project)
